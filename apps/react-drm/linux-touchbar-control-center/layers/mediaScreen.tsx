@@ -12,6 +12,7 @@ import {
 } from 'react-icons/md';
 import { BackButton } from '../components/BackButton';
 import { keys } from '../services/keyInjector';
+import { stepKeyboardBacklight } from '../services/keyboardBacklight';
 
 const isBuilt = __dirname.includes(path.sep + 'dist' + path.sep);
 
@@ -24,6 +25,12 @@ const KBD_ILLUM_UP_ICON = isBuilt
   : path.join(__dirname, '..', 'assets', 'kbd_illum_up.svg');
 
 // ── Actions ────────────────────────────────────────────────────────────────────
+
+// macOS steps the keyboard backlight through ~8 levels; 1/8 of max per press.
+// We drive the t2hid LED directly via brightnessctl instead of injecting
+// KEY_KBDILLUMDOWN/UP: no compositor/daemon on a GNOME Wayland session listens
+// for those keycodes, so the buttons were dead weight there.
+const KBD_ILLUM_STEP = 0.125;
 
 type Action =
   | 'Macro1'
@@ -42,8 +49,8 @@ function run(action: Action) {
     case 'BrightnessUp':     return keys.pressKey(KEY.BRIGHTNESSUP);
     case 'MicMute':          return keys.pressKey(KEY.MICMUTE);
     case 'Search':           return keys.pressKey(KEY.SEARCH);
-    case 'IllumDown':        return keys.pressKey(KEY.KBDILLUMDOWN);
-    case 'IllumUp':          return keys.pressKey(KEY.KBDILLUMUP);
+    case 'IllumDown':        stepKeyboardBacklight(-KBD_ILLUM_STEP); return;
+    case 'IllumUp':          stepKeyboardBacklight( KBD_ILLUM_STEP); return;
     case 'PreviousSong':     return keys.pressKey(KEY.PREVIOUSSONG);
     case 'PlayPause':        return keys.pressKey(KEY.PLAYPAUSE);
     case 'NextSong':         return keys.pressKey(KEY.NEXTSONG);
